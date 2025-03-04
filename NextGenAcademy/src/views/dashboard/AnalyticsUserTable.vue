@@ -25,8 +25,8 @@ const fetchPlayers = async () => {
       address, 
       city, 
       nationality, 
-      player_payments(status),
-      player_equipment(equipment_type, received)
+      guardian_name,
+      guardian_contact
     `);
 
   if (error) {
@@ -71,6 +71,9 @@ const headers = [
       class="text-no-wrap"
       @click:row="openPlayerModal"
     >
+      <template #item.team="{ item }">
+        <h6 class="text-h6 font-weight-medium">{{ item.teams.name }}</h6>
+      </template>
       <template #item.fullName="{ item }">
         <h6 class="text-h6 font-weight-medium">{{ item.first_name }} {{ item.last_name }}</h6>
       </template>
