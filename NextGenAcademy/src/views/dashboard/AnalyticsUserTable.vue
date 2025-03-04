@@ -1,246 +1,121 @@
 <script setup>
-import avatar1 from '@images/avatars/avatar-1.png'
-import avatar2 from '@images/avatars/avatar-2.png'
-import avatar3 from '@images/avatars/avatar-3.png'
-import avatar4 from '@images/avatars/avatar-4.png'
-import avatar5 from '@images/avatars/avatar-5.png'
-import avatar6 from '@images/avatars/avatar-6.png'
-import avatar7 from '@images/avatars/avatar-7.png'
-import avatar8 from '@images/avatars/avatar-8.png'
+import { ref, onMounted } from 'vue'
+import { supabase } from '@/supabase'
+import PlayerInfo from '@/layouts/components/players/PlayerInfo.vue'
+import PlayerPayments from '@/layouts/components/players/PlayerPayments.vue'
+import PlayerEquipment from '@/layouts/components/players/PlayerEquipment.vue'
 
-const headers = [
-  {
-    title: 'User',
-    key: 'username',
-  },
-  {
-    title: 'Email',
-    key: 'email',
-  },
-  {
-    title: 'Role',
-    key: 'role',
-  },
-  {
-    title: 'Status',
-    key: 'status',
-  },
-]
+const players = ref([])
+const activeTab = ref('playerInfo') // Default tab
+const selectedPlayer = ref(null)
+const isModalOpen = ref(false)
 
-const userData = [
-  {
-    id: 1,
-    fullName: 'Galasasen Slixby',
-    company: 'Yotz PVT LTD',
-    role: 'editor',
-    username: 'gslixby0',
-    country: 'El Salvador',
-    contact: '(479) 232-9151',
-    email: 'gslixby0@abc.net.au',
-    currentPlan: 'enterprise',
-    status: 'inactive',
-    avatar: avatar1,
-  },
-  {
-    id: 2,
-    fullName: 'Halsey Redmore',
-    company: 'Skinder PVT LTD',
-    role: 'author',
-    username: 'hredmore1',
-    country: 'Albania',
-    contact: '(472) 607-9137',
-    email: 'hredmore1@imgur.com',
-    currentPlan: 'team',
-    status: 'pending',
-    avatar: avatar2,
-  },
-  {
-    id: 3,
-    fullName: 'Marjory Sicely',
-    company: 'Oozz PVT LTD',
-    role: 'maintainer',
-    username: 'msicely2',
-    country: 'Russia',
-    contact: '(321) 264-4599',
-    email: 'msicely2@who.int',
-    currentPlan: 'enterprise',
-    status: 'active',
-    avatar: avatar3,
-  },
-  {
-    id: 4,
-    fullName: 'Cyrill Risby',
-    company: 'Oozz PVT LTD',
-    role: 'Admin',
-    username: 'crisby3',
-    country: 'China',
-    contact: '(923) 690-6806',
-    email: 'crisby3@wordpress.com',
-    currentPlan: 'team',
-    status: 'inactive',
-    avatar: avatar4,
-  },
-  {
-    id: 5,
-    fullName: 'Maggy Hurran',
-    company: 'Aimbo PVT LTD',
-    role: 'subscriber',
-    username: 'mhurran4',
-    country: 'Pakistan',
-    contact: '(669) 914-1078',
-    email: 'mhurran4@yahoo.co.jp',
-    currentPlan: 'enterprise',
-    status: 'pending',
-    avatar: avatar5,
-  },
-  {
-    id: 6,
-    fullName: 'Silvain Halstead',
-    company: 'Jaxbean PVT LTD',
-    role: 'author',
-    username: 'shalstead5',
-    country: 'China',
-    contact: '(958) 973-3093',
-    email: 'shalstead5@shinystat.com',
-    currentPlan: 'company',
-    status: 'active',
-    avatar: avatar6,
-  },
-  {
-    id: 7,
-    fullName: 'Breena Gallemore',
-    company: 'Jazzy PVT LTD',
-    role: 'subscriber',
-    username: 'bgallemore6',
-    country: 'Canada',
-    contact: '(825) 977-8152',
-    email: 'bgallemore6@boston.com',
-    currentPlan: 'company',
-    status: 'pending',
-    avatar: avatar7,
-  },
-  {
-    id: 8,
-    fullName: 'Kathryne Liger',
-    company: 'Pixoboo PVT LTD',
-    role: 'author',
-    username: 'kliger7',
-    country: 'France',
-    contact: '(187) 440-0934',
-    email: 'kliger7@vinaora.com',
-    currentPlan: 'enterprise',
-    status: 'pending',
-    avatar: avatar8,
-  },
-]
+const fetchPlayers = async () => {
+  const { data, error } = await supabase
+    .from('players')
+    .select(`
+      id, 
+      first_name, 
+      last_name, 
+      birth_date, 
+      position, 
+      contact, 
+      team_id,
+      teams(name),
+      address, 
+      city, 
+      nationality, 
+      player_payments(status),
+      player_equipment(equipment_type, received)
+    `);
 
-const resolveUserRoleVariant = role => {
-  const roleLowerCase = role.toLowerCase()
-  if (roleLowerCase === 'subscriber')
-    return {
-      color: 'success',
-      icon: 'ri-user-line',
-    }
-  if (roleLowerCase === 'author')
-    return {
-      color: 'error',
-      icon: 'ri-computer-line',
-    }
-  if (roleLowerCase === 'maintainer')
-    return {
-      color: 'info',
-      icon: 'ri-pie-chart-line',
-    }
-  if (roleLowerCase === 'editor')
-    return {
-      color: 'warning',
-      icon: 'ri-edit-box-line',
-    }
-  if (roleLowerCase === 'admin')
-    return {
-      color: 'primary',
-      icon: 'ri-vip-crown-line',
-    }
-  
-  return {
-    color: 'success',
-    icon: 'ri-user-line',
+  if (error) {
+    console.error("Error fetching players:", error.message);
+  } else {
+    players.value = data.map(player => ({
+      ...player,
+      payment_status: player.player_payments?.length ? player.player_payments[0].status : 'N/A',
+      team_name: player.teams ? player.teams.name : 'No Team'
+    }));
   }
+};
+
+
+// Open Modal and Set Player
+const openPlayerModal = (event, { item }) => {
+  selectedPlayer.value = item
+  isModalOpen.value = true
 }
 
-const resolveUserStatusVariant = stat => {
-  const statLowerCase = stat.toLowerCase()
-  if (statLowerCase === 'pending')
-    return 'warning'
-  if (statLowerCase === 'active')
-    return 'success'
-  if (statLowerCase === 'inactive')
-    return 'secondary'
-  
-  return 'primary'
-}
+// Fetch players when component mounts
+onMounted(fetchPlayers)
+
+// Table Headers
+const headers = [
+  { title: 'Team', key: 'team' },
+  { title: 'Player', key: 'fullName' },
+  { title: 'Birthdate', key: 'birth' },
+  { title: 'Position', key: 'position' },
+  { title: 'Contact', key: 'contact' },
+  { title: 'Payment Status', key: 'payment' },
+  { title: 'Equipment Status', key: 'equipment' },
+]
 </script>
 
 <template>
   <VCard>
     <VDataTable
       :headers="headers"
-      :items="userData"
+      :items="players"
       item-value="id"
       class="text-no-wrap"
+      @click:row="openPlayerModal"
     >
-      <!-- User -->
-      <template #item.username="{ item }">
-        <div class="d-flex align-center gap-x-4">
-          <VAvatar
-            size="34"
-            :variant="!item.avatar ? 'tonal' : undefined"
-            :color="!item.avatar ? resolveUserRoleVariant(item.role).color : undefined"
-          >
-            <VImg
-              v-if="item.avatar"
-              :src="item.avatar"
-            />
-          </VAvatar>
-
-          <div class="d-flex flex-column">
-            <h6 class="text-h6 font-weight-medium user-list-name">
-              {{ item.fullName }}
-            </h6>
-
-            <span class="text-sm text-medium-emphasis">@{{ item.username }}</span>
-          </div>
-        </div>
+      <template #item.fullName="{ item }">
+        <h6 class="text-h6 font-weight-medium">{{ item.first_name }} {{ item.last_name }}</h6>
       </template>
-      <!-- Role -->
-      <template #item.role="{ item }">
-        <div class="d-flex gap-4">
-          <VIcon
-            :icon="resolveUserRoleVariant(item.role).icon"
-            :color="resolveUserRoleVariant(item.role).color"
-            size="22"
-          />
-          <div class="text-capitalize text-high-emphasis">
-            {{ item.role }}
-          </div>
-        </div>
+      <template #item.birth="{ item }">
+        {{ item.birth_date }}
       </template>
-      <!-- Plan -->
-      <template #item.plan="{ item }">
-        <span class="text-capitalize text-high-emphasis">{{ item.currentPlan }}</span>
+      <template #item.position="{ item }">
+        <div class="text-capitalize">{{ item.position }}</div>
       </template>
-      <!-- Status -->
-      <template #item.status="{ item }">
-        <VChip
-          :color="resolveUserStatusVariant(item.status)"
-          size="small"
-          class="text-capitalize"
-        >
-          {{ item.status }}
-        </VChip>
+      <template #item.contact="{ item }">
+        <div>{{ item.contact }}</div>
       </template>
-
       <template #bottom />
     </VDataTable>
   </VCard>
+
+  <!-- Player Modal -->
+  <VDialog v-model="isModalOpen" width="600">
+    <VCard>
+      <VCardTitle>
+        {{ selectedPlayer?.first_name }} {{ selectedPlayer?.last_name }} - {{ selectedPlayer?.team_name || 'No team' }}
+      </VCardTitle>
+      <VCardText>
+        <VTabs v-model="activeTab">
+          <VTab value="playerInfo">Information</VTab>
+          <VTab value="playerPayments">Payments</VTab>
+          <VTab value="playerEquipment">Equipment</VTab>
+        </VTabs>
+
+        <VWindow v-model="activeTab">
+          <VWindowItem value="playerInfo">
+            <PlayerInfo :player="selectedPlayer" />
+          </VWindowItem>
+          <VWindowItem value="playerPayments">
+            <PlayerPayments :player="selectedPlayer" />
+          </VWindowItem>
+          <VWindowItem value="playerEquipment">
+            <PlayerEquipment :player="selectedPlayer" />
+          </VWindowItem>
+        </VWindow>
+      </VCardText>
+
+      <VCardActions>
+        <VBtn @click="isModalOpen = false">Close</VBtn>
+      </VCardActions>
+    </VCard>
+  </VDialog>
 </template>

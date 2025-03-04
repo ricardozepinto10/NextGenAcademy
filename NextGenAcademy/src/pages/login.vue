@@ -1,7 +1,7 @@
 <script setup>
 import { useTheme } from 'vuetify'
 import AuthProvider from '@/views/pages/authentication/AuthProvider.vue'
-import logo from '@images/logo.svg?raw'
+import logo from '@images/logo.png?raw'
 import authV1MaskDark from '@images/pages/auth-v1-mask-dark.png'
 import authV1MaskLight from '@images/pages/auth-v1-mask-light.png'
 import authV1Tree2 from '@images/pages/auth-v1-tree-2.png'
@@ -41,14 +41,14 @@ const isPasswordVisible = ref(false)
             v-html="logo"
           />
           <h2 class="font-weight-medium text-2xl text-uppercase">
-            Materio
+            NextGen Academy
           </h2>
         </RouterLink>
       </VCardItem>
 
       <VCardText class="pt-2">
         <h4 class="text-h4 mb-1">
-          Welcome to Materio! 👋🏻
+          Welcome to NextGen Academy! 👋🏻
         </h4>
         <p class="mb-0">
           Please sign-in to your account and start the adventure
