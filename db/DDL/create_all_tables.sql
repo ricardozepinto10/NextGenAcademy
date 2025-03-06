@@ -48,7 +48,7 @@ CREATE TABLE teams (
 	id serial4 NOT NULL,
 	"name" varchar(10) NOT NULL,
 	club_id int4 NOT NULL,
-	CONSTRAINT teams_name_key UNIQUE (name),
+	CONSTRAINT teams_unique_name_per_club UNIQUE (name, club_id);
 	CONSTRAINT teams_pkey PRIMARY KEY (id),
 	CONSTRAINT teams_club_id_fkey FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE
 );
