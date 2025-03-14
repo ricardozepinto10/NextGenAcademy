@@ -7,6 +7,8 @@ import avatar1 from '@images/avatars/avatar-1.png'
 const router = useRouter()
 
 const userName = ref('John Doe') // Default name
+const userRole = ref('Admin') // Default name
+const userEmail = ref('johndoe@email.com') // Default email
 
 const handleLogout = async () => {
   const { error } = await supabase.auth.signOut()
@@ -24,13 +26,15 @@ onMounted(async () => {
   if (user) {
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('first_name, last_name')
+      .select('first_name, last_name, role')
       .eq('id', user.id)
       .single()
-
     if (profile) {
       userName.value = `${profile.first_name} ${profile.last_name}`.trim() || 'John Doe'
+      // Capitalize the first letter of the userRole
+      userRole.value = profile.role.charAt(0).toUpperCase() + profile.role.slice(1).toLowerCase()
     }
+    userEmail.value = user.email || 'No Email' // Store the email value
   }
 })
 </script>
@@ -83,7 +87,12 @@ onMounted(async () => {
             <VListItemTitle class="font-weight-semibold">
               {{ userName }}
             </VListItemTitle>
-            <VListItemSubtitle>Admin</VListItemSubtitle>
+            <VListItemSubtitle>
+              {{ userRole }}
+            </VListItemSubtitle>
+            <VListItemSubtitle>
+              {{ userEmail }} 
+            </VListItemSubtitle>
           </VListItem>
           <VDivider class="my-2" />
 
