@@ -1,5 +1,38 @@
 <script setup>
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { supabase } from '@/supabase'
 import avatar1 from '@images/avatars/avatar-1.png'
+
+const router = useRouter()
+
+const userName = ref('John Doe') // Default name
+
+const handleLogout = async () => {
+  const { error } = await supabase.auth.signOut()
+  if (error) {
+    console.error('Logout failed:', error.message)
+  } else {
+    router.push('/login')
+  }
+}
+
+// Fetch user profile data
+onMounted(async () => {
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  if (user) {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('first_name, last_name')
+      .eq('id', user.id)
+      .single()
+
+    if (profile) {
+      userName.value = `${profile.first_name} ${profile.last_name}`.trim() || 'John Doe'
+    }
+  }
+})
 </script>
 
 <template>
@@ -48,49 +81,23 @@ import avatar1 from '@images/avatars/avatar-1.png'
             </template>
 
             <VListItemTitle class="font-weight-semibold">
-              John Doe
+              {{ userName }}
             </VListItemTitle>
             <VListItemSubtitle>Admin</VListItemSubtitle>
           </VListItem>
           <VDivider class="my-2" />
 
           <!-- 👉 Profile -->
-          <VListItem link>
+          <VListItem to="account-settings">
             <template #prepend>
               <VIcon
                 class="me-2"
-                icon="ri-user-line"
+                icon="ri-user-5-line"
                 size="22"
               />
             </template>
 
-            <VListItemTitle>Profile</VListItemTitle>
-          </VListItem>
-
-          <!-- 👉 Settings -->
-          <VListItem link>
-            <template #prepend>
-              <VIcon
-                class="me-2"
-                icon="ri-settings-4-line"
-                size="22"
-              />
-            </template>
-
-            <VListItemTitle>Settings</VListItemTitle>
-          </VListItem>
-
-          <!-- 👉 Pricing -->
-          <VListItem link>
-            <template #prepend>
-              <VIcon
-                class="me-2"
-                icon="ri-money-dollar-circle-line"
-                size="22"
-              />
-            </template>
-
-            <VListItemTitle>Pricing</VListItemTitle>
+            <VListItemTitle>User Settings</VListItemTitle>
           </VListItem>
 
           <!-- 👉 FAQ -->
@@ -110,7 +117,7 @@ import avatar1 from '@images/avatars/avatar-1.png'
           <VDivider class="my-2" />
 
           <!-- 👉 Logout -->
-          <VListItem to="/login">
+          <VListItem @click="handleLogout">
             <template #prepend>
               <VIcon
                 class="me-2"

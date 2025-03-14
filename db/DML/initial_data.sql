@@ -13,7 +13,9 @@ INSERT INTO teams (club_id, name) VALUES
 (2, 'U11'),
 (2, 'U12');
 
-select * from teams;
+select * from clubs;
+
+select * from profiles
 
 
 -- Insert players for Club 1, 2 players per team
@@ -36,3 +38,6 @@ VALUES
   (2, 'Olivia', 'Martinez', '2008-04-01', 'DF', 9, '2234567893', '203 Main St', 'City B', 'Country B', 'Carlos Martinez', '9876543223'),
   (2, 'Liam', 'Rodriguez', '2008-05-01', 'FW', 10, '2234567894', '204 Main St', 'City B', 'Country B', 'Linda Rodriguez', '9876543224'),
   (2, 'Mia', 'Hernandez', '2008-06-01', 'MF', 10, '2234567895', '205 Main St', 'City B', 'Country B', 'Marco Hernandez', '9876543225');
+
+
+select * from profiles;

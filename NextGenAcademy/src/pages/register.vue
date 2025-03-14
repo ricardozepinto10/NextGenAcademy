@@ -13,7 +13,9 @@ const router = useRouter()
 const form = ref({
   email: '',
   password: '',
-  code: '', // Club code
+  first_name: '', // Added first name
+  last_name: '',  // Added last name
+  code: '', 
   privacyPolicies: false,
 })
 
@@ -28,9 +30,9 @@ const register = async () => {
 
   try {
     const response = await registerUser(form.value)
-    
+
     if (response.success) {
-      router.push('/') // Redirect to homepage after successful registration
+      router.push('/')
     }
   } catch (error) {
     console.error('Registration Error:', error.message)
@@ -49,14 +51,19 @@ const register = async () => {
         </RouterLink>
       </VCardItem>
 
-      <VCardText class="pt-2">
-        <h4 class="text-h4 mb-1">Adventure starts here 🚀</h4>
-        <p class="mb-0">Make your app management easy and fun!</p>
-      </VCardText>
-
       <VCardText>
         <VForm @submit.prevent="register">
           <VRow>
+            <!-- First Name -->
+            <VCol cols="12">
+              <VTextField v-model="form.first_name" label="First Name" placeholder="John" />
+            </VCol>
+
+            <!-- Last Name -->
+            <VCol cols="12">
+              <VTextField v-model="form.last_name" label="Last Name" placeholder="Doe" />
+            </VCol>
+
             <!-- Email -->
             <VCol cols="12">
               <VTextField v-model="form.email" label="Email" placeholder="johndoe@email.com" type="email" />
@@ -80,7 +87,6 @@ const register = async () => {
               <VTextField v-model="form.code" label="Club Code" placeholder="Enter Club Code" />
             </VCol>
 
-            <!-- Privacy Policy -->
             <VCol cols="12">
               <div class="d-flex align-center my-6">
                 <VCheckbox id="privacy-policy" v-model="form.privacyPolicies" inline />
@@ -92,34 +98,9 @@ const register = async () => {
 
               <VBtn block type="submit">Sign up</VBtn>
             </VCol>
-
-            <!-- Login Instead -->
-            <VCol cols="12" class="text-center text-base">
-              <span>Already have an account?</span>
-              <RouterLink class="text-primary ms-2" to="login">Sign in instead</RouterLink>
-            </VCol>
-
-            <VCol cols="12" class="d-flex align-center">
-              <VDivider />
-              <span class="mx-4">or</span>
-              <VDivider />
-            </VCol>
-
-            <!-- Auth Providers -->
-            <VCol cols="12" class="text-center">
-              <AuthProvider />
-            </VCol>
           </VRow>
         </VForm>
       </VCardText>
     </VCard>
-
-    <VImg class="auth-footer-start-tree d-none d-md-block" :src="authV1Tree" :width="250" />
-    <VImg :src="authV1Tree2" class="auth-footer-end-tree d-none d-md-block" :width="350" />
-    <VImg class="auth-footer-mask d-none d-md-block" :src="authThemeMask" />
   </div>
 </template>
-
-<style lang="scss">
-@use "@core/scss/template/pages/page-auth";
-</style>

@@ -74,13 +74,15 @@ CREATE TABLE users (
   confirmed boolean DEFAULT false,
   created_at timestamp DEFAULT now()
 );*/
-create table public.profiles (
-  id uuid primary key references auth.users on delete cascade,
-  club_id integer references clubs(id) on delete cascade,
-  role text check (role in ('admin', 'coach', 'parent')),
-  confirmed boolean default false,
-  created_at timestamp default now()
+
+CREATE TABLE public.profiles (
+  id uuid not null PRIMARY key references auth.users on delete cascade,
+  club_id integer REFERENCES clubs(id) ON DELETE CASCADE,           
+  role text CHECK (role IN ('admin', 'coach', 'parent')),             
+  first_name text,                                                   
+  last_name text                                                     
 );
+
 
 alter table public.profiles enable row level security;
 

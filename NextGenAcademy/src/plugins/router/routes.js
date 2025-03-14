@@ -7,14 +7,17 @@ export const routes = [
       {
         path: 'dashboard',
         component: () => import('@/pages/dashboard.vue'),
+        meta: { requiresAuth: true }, // 🔒 Protected Route
       },
       {
         path: 'account-settings',
         component: () => import('@/pages/account-settings.vue'),
+        meta: { requiresAuth: true }, // 🔒 Protected Route
       },
       {
         path: 'players',
         component: () => import('@/pages/players.vue'),
+        meta: { requiresAuth: true }, // 🔒 Protected Route
       },
     ],
   },
