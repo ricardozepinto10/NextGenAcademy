@@ -39,5 +39,8 @@ VALUES
   (2, 'Liam', 'Rodriguez', '2008-05-01', 'FW', 10, '2234567894', '204 Main St', 'City B', 'Country B', 'Linda Rodriguez', '9876543224'),
   (2, 'Mia', 'Hernandez', '2008-06-01', 'MF', 10, '2234567895', '205 Main St', 'City B', 'Country B', 'Marco Hernandez', '9876543225');
 
-
-select * from profiles;
+INSERT INTO public.trainings (team_id, title, description, start_datetime, end_datetime) 
+VALUES 
+(10, 'Youth Training Session', 'Focus on ball control and passing.', '2025-03-18 10:59:02', '2025-03-18 12:59:02'),
+(10, 'Advanced Drills', 'Tactical and fitness training.', '2025-03-19 15:59:02', '2025-03-19 17:59:02'),
+(10, 'Morning Technical Skills', 'Footwork and agility training.', '2025-03-20 09:59:02', '2025-03-20 11:59:02');

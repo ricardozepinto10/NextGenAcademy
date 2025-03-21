@@ -47,7 +47,7 @@ import VerticalNavLink from '@layouts/components/VerticalNavLink.vue'
     :item="{
       title: 'Calendar',
       icon: 'ri-calendar-line',
-      target: '_blank',
+      to: '/calendar',   
        
        
     }"

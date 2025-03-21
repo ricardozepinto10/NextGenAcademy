@@ -19,6 +19,11 @@ export const routes = [
         component: () => import('@/pages/players.vue'),
         meta: { requiresAuth: true }, // 🔒 Protected Route
       },
+      {
+        path: 'calendar',
+        component: () => import('@/pages/calendar.vue'),
+        meta: { requiresAuth: true }, // 🔒 Protected Route
+      },
     ],
   },
   {

@@ -54,16 +54,17 @@ CREATE TABLE teams (
 );
 
 CREATE TABLE trainings (
-	id serial4 NOT NULL,
-	club_id int4 NULL,
-	coach_id int4 NULL,
-	"date" timestamp NOT NULL,
-	description text NULL,
-	created_at timestamp DEFAULT now() NULL,
-	CONSTRAINT trainings_pkey PRIMARY KEY (id),
-	CONSTRAINT trainings_club_id_fkey FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE,
-	CONSTRAINT trainings_coach_id_fkey FOREIGN KEY (coach_id) REFERENCES staff(id) ON DELETE SET NULL
+    id serial4 NOT NULL,
+    team_id int4 NOT NULL, -- Added to reference the team
+    title text NOT NULL,
+    description text NULL,
+    start_datetime timestamp NOT NULL, -- Start time of the training
+    end_datetime timestamp NOT NULL,   -- End time of the training
+    created_at timestamp DEFAULT now() NULL,
+    CONSTRAINT trainings_pkey PRIMARY KEY (id),
+    CONSTRAINT trainings_team_id_fkey FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
 );
+
 /*
 CREATE TABLE users (
   id uuid not null references auth.users on delete cascade,
