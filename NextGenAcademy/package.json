@@ -18,7 +18,7 @@
     "@schedule-x/theme-default": "^2.22.0",
     "@schedule-x/vue": "^2.20.0",
     "@stylistic/stylelint-config": "^1.0.1",
-    "@supabase/supabase-js": "^2.49.1",
+    "@supabase/supabase-js": "^2.49.3",
     "@vueuse/core": "^10.11.1",
     "@vueuse/math": "^10.11.1",
     "apexcharts": "^3.54.1",

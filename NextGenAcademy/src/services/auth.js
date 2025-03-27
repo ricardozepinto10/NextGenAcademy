@@ -1,25 +1,28 @@
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '@/supabase'
 
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-)
+export const loginUser = async (email, password) => {
+  const { data: session, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
 
-export async function loginUser(email, password) {
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-
-    if (error) {
-      throw new Error(error.message || 'Invalid credentials. Please check your email and password.')
-    }
-
-    // Ensure data.session exists (successful login)
-    if (!data.session) {
-      throw new Error('Authentication failed. No session created.')
-    }
-
-    return { success: true, message: 'Login successful' }
-  } catch (error) {
+  if (error) {
     return { success: false, message: error.message }
+  }
+
+  // Fetch user profile data after login
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', session.user.id)
+    .single()
+
+  if (profileError) {
+    return { success: false, message: profileError.message }
+  }
+
+  return {
+    success: true,
+    user: { ...session.user, role: profile ? profile.role : 'guest' }, // Ensure the role is returned
   }
 }

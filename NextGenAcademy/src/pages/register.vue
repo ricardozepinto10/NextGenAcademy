@@ -13,9 +13,10 @@ const router = useRouter()
 const form = ref({
   email: '',
   password: '',
-  first_name: '', // Added first name
-  last_name: '',  // Added last name
-  code: '', 
+  first_name: '',
+  last_name: '',
+  code: '',
+  role: '', // Added role field
   privacyPolicies: false,
 })
 
@@ -24,7 +25,6 @@ const authThemeMask = computed(() => vuetifyTheme.global.name.value === 'light' 
 
 const isPasswordVisible = ref(false)
 
-// Function to handle registration
 const register = async () => {
   if (!form.value.privacyPolicies) return
 
@@ -85,6 +85,17 @@ const register = async () => {
             <!-- Club Code -->
             <VCol cols="12">
               <VTextField v-model="form.code" label="Club Code" placeholder="Enter Club Code" />
+            </VCol>
+
+            <!-- Role Selection -->
+            <VCol cols="12">
+              <VSelect
+                v-model="form.role"
+                label="Role"
+                :items="['player', 'staff', 'associate']"
+                placeholder="Select Role"
+                clearable
+              />
             </VCol>
 
             <VCol cols="12">

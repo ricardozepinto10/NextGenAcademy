@@ -21,26 +21,22 @@ CREATE TABLE clubs (
 
 ALTER TABLE clubs ADD COLUMN code varchar(8) UNIQUE NOT NULL DEFAULT substr(md5(random()::text), 1, 8);
 
-CREATE TABLE associates (
-	id serial4 NOT NULL,
-	club_id int4 NULL,
-	"name" text NOT NULL,
-	"type" text NULL,
-	created_at timestamp DEFAULT now() NULL,
-	CONSTRAINT associates_pkey PRIMARY KEY (id),
-	CONSTRAINT associates_type_check CHECK ((type = ANY (ARRAY['sponsor'::text, 'donor'::text]))),
-	CONSTRAINT associates_club_id_fkey FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE
+CREATE TABLE public.roles (
+  id serial PRIMARY KEY,
+  name text NOT NULL UNIQUE,  -- Roles: 'staff', 'associate', 'player', 'parent', 'admin'
+  description text,          -- Optional description of the role
+  created_at timestamp DEFAULT now() NULL
 );
 
-
-CREATE TABLE staff (
-	id serial4 NOT NULL,
-	club_id int4 NULL,
-	user_id int4 NULL,
-	"role" text NOT NULL,
-	created_at timestamp DEFAULT now() NULL,
-	CONSTRAINT staff_pkey PRIMARY KEY (id),
-	CONSTRAINT staff_club_id_fkey FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE
+CREATE TABLE public.user_roles (
+  user_role_id serial PRIMARY KEY,
+  id uuid NOT NULL,
+  club_id int4 NOT NULL,
+  role_id int4 NOT NULL,  -- Foreign key to the roles table
+  created_at timestamp DEFAULT now() NULL,
+  CONSTRAINT fk_user FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_club FOREIGN KEY (club_id) REFERENCES public.clubs(id) ON DELETE CASCADE,
+  CONSTRAINT fk_role FOREIGN KEY (role_id) REFERENCES public.roles(id) ON DELETE CASCADE
 );
 
 
@@ -65,16 +61,6 @@ CREATE TABLE trainings (
     CONSTRAINT trainings_team_id_fkey FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
 );
 
-/*
-CREATE TABLE users (
-  id uuid not null references auth.users on delete cascade,
-  club_id integer REFERENCES clubs(id) ON DELETE CASCADE,
-  email text NOT NULL UNIQUE,
-  password_hash text NOT NULL,
-  role text CHECK (role IN ('admin', 'coach', 'parent')),
-  confirmed boolean DEFAULT false,
-  created_at timestamp DEFAULT now()
-);*/
 
 CREATE TABLE public.profiles (
   id uuid not null PRIMARY key references auth.users on delete cascade,

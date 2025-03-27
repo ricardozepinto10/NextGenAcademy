@@ -15,11 +15,11 @@ const isModalOpen = ref(false)
 const userClubId = ref(null)
 
 const fetchUserClub = async () => {
-  const user = (await supabase.auth.getUser()).data.user;
+  const user = (await supabase.auth.getUser()).data.user
 
   if (!user) {
-    console.error("User not authenticated");
-    return;
+    console.error("User not authenticated")
+    return
   }
 
   const { data, error } = await supabase
@@ -27,51 +27,65 @@ const fetchUserClub = async () => {
     .select('club_id')
     .eq('id', user.id)
     .limit(1)
-    .maybeSingle();
+    .maybeSingle()
 
   if (error) {
-    console.error("Error fetching user club:", error.message);
+    console.error("Error fetching user club:", error.message)
   } else if (!data) {
-    console.error("No profile found for user");
+    console.error("No profile found for user")
   } else {
-    userClubId.value = data.club_id; // Correctly set the club_id
-    fetchTeams(); // Fetch teams for the user's club
-    fetchPlayers(); // Fetch players for the user's club
+    userClubId.value = data.club_id
+    fetchTeams()
+    fetchPlayers()
   }
-};
+}
 
 const fetchPlayers = async () => {
   const { data, error } = await supabase
-    .from('players')
-    .select(`id, first_name, last_name, birth_date, position, contact, team_id, teams(name), address, city, nationality, guardian_name, guardian_contact`)
-    .eq('club_id', userClubId.value); // Filter players by the club_id
+    .from('profiles')
+    .select(`
+      id,
+      first_name,
+      last_name,
+      birth_date,
+      position,
+      contact,
+      team_id,
+      teams(name),
+      address,
+      city,
+      nationality,
+      guardian_name,
+      guardian_contact
+    `)
+    .eq('club_id', userClubId.value)
+    .eq('role', 'player') // Only fetch players
 
   if (error) {
-    console.error("Error fetching players:", error.message);
+    console.error("Error fetching players:", error.message)
   } else {
     players.value = data.map(player => ({
       ...player,
       full_name: `${player.first_name} ${player.last_name}`,
-      team_name: player.teams ? player.teams.name : 'No Team',
-      payment_status: player.player_payments?.length ? player.player_payments[0].status : 'N/A',
-    }));
+      team_name: player.teams ? player.teams.name : 'No Team'
+    }))
   }
-};
+}
 
 const fetchTeams = async () => {
   const { data, error } = await supabase
     .from('teams')
     .select('id, name')
-    .eq('club_id', userClubId.value); // Filter by club_id
+    .eq('club_id', userClubId.value)
 
   if (error) {
-    console.error("Error fetching teams:", error.message);
+    console.error("Error fetching teams:", error.message)
   } else {
     teams.value = data
-      .map(team => ({ name: team.name, value: team.id }))  // Ensure value is the team id and text is the team name
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .map(team => ({ name: team.name, value: team.id }))
+      .sort((a, b) => a.name.localeCompare(b.name))
   }
-};
+}
 
 const sortedPlayers = computed(() => {
   return [...players.value].sort((a, b) => {
@@ -79,10 +93,10 @@ const sortedPlayers = computed(() => {
     const numB = parseInt(b.team_name.replace(/\D/g, ""), 10)
     return numA - numB
   })
-});
+})
 
 const filteredPlayers = computed(() => {
-  const searchLower = (searchQuery.value || "").toLowerCase(); // Handle null or empty string
+  const searchLower = (searchQuery.value || "").toLowerCase()
 
   return sortedPlayers.value.filter(player => {
     const matchesTeam = !selectedTeam.value || player.team_id === selectedTeam.value
@@ -91,19 +105,19 @@ const filteredPlayers = computed(() => {
       player.full_name.toLowerCase().includes(searchLower) ||
       player.team_name.toLowerCase().includes(searchLower) ||
       player.position.toLowerCase().includes(searchLower) ||
-      player.contact.includes(searchLower) ||
+      player.contact?.includes(searchLower) ||
       (player.guardian_name && player.guardian_name.toLowerCase().includes(searchLower))
 
     return matchesTeam && matchesSearch
   })
-});
+})
 
 const openPlayerModal = (event, { item }) => {
   selectedPlayer.value = item
   isModalOpen.value = true
 }
 
-onMounted(fetchUserClub);
+onMounted(fetchUserClub)
 
 const headers = [
   { title: 'Team', key: 'team_name' },
@@ -113,7 +127,7 @@ const headers = [
   { title: 'Contact', key: 'contact' },
   { title: 'Guardian', key: 'guardian_name' },
   { title: 'Guardian Contact', key: 'guardian_contact' }
-];
+]
 </script>
 
 <template>
@@ -126,13 +140,13 @@ const headers = [
         item-value="value"
         label="Filter by Team"
         clearable
-      ></VSelect>
+      />
 
       <VTextField
         v-model="searchQuery"
         label="Search Players"
         clearable
-      ></VTextField>
+      />
     </div>
 
     <VDataTable

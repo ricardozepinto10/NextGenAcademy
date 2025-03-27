@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY)
 
 // Function to register a new user
-export async function registerUser({ email, password, code, first_name, last_name }) {
+export async function registerUser({ email, password, code, first_name, last_name, role }) {
   try {
     const { data: club, error: clubError } = await supabase
       .from('clubs')
@@ -22,16 +22,15 @@ export async function registerUser({ email, password, code, first_name, last_nam
         data: {
           first_name,
           last_name,
-          club_id: club.id  // Ensure club_id is included here
+          club_id: club.id, 
+          role                
         }
       }
     })
-    
+
     if (authError) {
       throw new Error('Error creating user in Supabase Auth. ' + authError.message)
     }
-    
-    
 
     // UPDATE the profile instead of inserting
     const { error: profileError } = await supabase
@@ -39,9 +38,10 @@ export async function registerUser({ email, password, code, first_name, last_nam
       .update({
         first_name,
         last_name,
-        club_id: club.id,  // Assign the correct club_id
+        club_id: club.id,
+        role                   
       })
-      .eq('id', authData.user.id) // Match the profile by user ID
+      .eq('id', authData.user.id)
 
     if (profileError) {
       throw new Error('Error updating profile. ' + profileError.message)

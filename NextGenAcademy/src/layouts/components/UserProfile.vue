@@ -15,26 +15,34 @@ const handleLogout = async () => {
   if (error) {
     console.error('Logout failed:', error.message)
   } else {
+    // Redirect to login page after logout
     router.push('/login')
   }
 }
 
 // Fetch user profile data
 onMounted(async () => {
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error } = await supabase.auth.getUser()
   
+  if (error) {
+    console.error('Error fetching user:', error.message)
+    return
+  }
+
   if (user) {
-    const { data: profile, error } = await supabase
+    // Fetch user profile data
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('first_name, last_name, role')
       .eq('id', user.id)
       .single()
+
     if (profile) {
       userName.value = `${profile.first_name} ${profile.last_name}`.trim() || 'John Doe'
-      // Capitalize the first letter of the userRole
       userRole.value = profile.role.charAt(0).toUpperCase() + profile.role.slice(1).toLowerCase()
     }
-    userEmail.value = user.email || 'No Email' // Store the email value
+
+    userEmail.value = user.email || 'No Email'
   }
 })
 </script>

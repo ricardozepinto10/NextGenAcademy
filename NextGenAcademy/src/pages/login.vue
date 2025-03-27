@@ -1,13 +1,7 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useTheme } from 'vuetify'
-import { loginUser } from '@/services/auth.js'
-import AuthProvider from '@/views/pages/authentication/AuthProvider.vue'
-import authV1MaskDark from '@images/pages/auth-v1-mask-dark.png'
-import authV1MaskLight from '@images/pages/auth-v1-mask-light.png'
-import authV1Tree2 from '@images/pages/auth-v1-tree-2.png'
-import authV1Tree from '@images/pages/auth-v1-tree.png'
+import { loginUser } from '@/services/auth.js' // Your login service
 
 const router = useRouter()
 const form = ref({
@@ -18,14 +12,6 @@ const form = ref({
 const errorMessage = ref('')
 const isLoading = ref(false)
 
-const vuetifyTheme = useTheme()
-const authThemeMask = computed(() => {
-  return vuetifyTheme.global.name.value === 'light' ? authV1MaskLight : authV1MaskDark
-})
-
-const isPasswordVisible = ref(false)
-
-// Handle login
 const handleLogin = async () => {
   isLoading.value = true
   errorMessage.value = ''
@@ -34,7 +20,12 @@ const handleLogin = async () => {
     const response = await loginUser(form.value.email, form.value.password)
 
     if (response.success) {
-      router.push('/') // Redirect to home/dashboard
+      const user = response.user // Now user contains the role
+      if (user.role === 'superadmin') {
+        router.push('/superadmin')  // Redirect SuperAdmin to the /superadmin page
+      } else {
+        router.push('/dashboard')  // Redirect other roles to the default dashboard
+      }
     } else {
       errorMessage.value = response.message
     }
@@ -114,10 +105,6 @@ const handleLogin = async () => {
         </VForm>
       </VCardText>
     </VCard>
-
-    <VImg class="auth-footer-start-tree d-none d-md-block" :src="authV1Tree" :width="250" />
-    <VImg :src="authV1Tree2" class="auth-footer-end-tree d-none d-md-block" :width="350" />
-    <VImg class="auth-footer-mask d-none d-md-block" :src="authThemeMask" />
   </div>
 </template>
 
