@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { supabase } from '@/supabase'
+import { sendInvitation } from '@/composables/useInvitation'
 
 const clubs = ref([])
 const selectedClub = ref(null)
@@ -13,13 +14,10 @@ const name = ref("")
 const city = ref("")
 const country = ref("")
 
-const headers = [
-  { text: 'Club ID', value: 'id' },
-  { text: 'Name', value: 'name' },
-  { text: 'Country', value: 'country' },
-  { text: 'City', value: 'city' },
-  { text: 'Code', value: 'code' }
-]
+const selectedCountry = ref("")
+const selectedCity = ref("")
+
+const inviteEmail = ref("")
 
 // Fetch clubs data
 const fetchClubs = async () => {
@@ -31,15 +29,36 @@ const fetchClubs = async () => {
   }
 }
 
+// Computed properties for dropdown filter options
+const uniqueCountries = computed(() => {
+  return [...new Set(clubs.value.map(club => club.country))].sort()
+})
+
+const uniqueCities = computed(() => {
+  return [...new Set(clubs.value.map(club => club.city))].sort()
+})
+
 // Filter logic
 const filteredClubs = computed(() => {
   const query = searchQuery.value.toLowerCase()
-  return clubs.value.filter(club =>
-    club.name.toLowerCase().includes(query) ||
-    club.country.toLowerCase().includes(query) ||
-    club.city.toLowerCase().includes(query) ||
-    club.code.toLowerCase().includes(query)
-  )
+
+  return clubs.value.filter(club => {
+    const matchesSearch =
+      club.name.toLowerCase().includes(query) ||
+      club.country.toLowerCase().includes(query) ||
+      club.city.toLowerCase().includes(query) ||
+      club.code.toLowerCase().includes(query)
+
+    const matchesCountry = selectedCountry.value
+      ? club.country === selectedCountry.value
+      : true
+
+    const matchesCity = selectedCity.value
+      ? club.city === selectedCity.value
+      : true
+
+    return matchesSearch && matchesCountry && matchesCity
+  })
 })
 
 // Open details modal
@@ -77,6 +96,28 @@ const deleteClub = async () => {
   }
 }
 
+// Handle invitation
+const inviteAdmin = async () => {
+  if (!inviteEmail.value) return
+
+  const { success, error } = await sendInvitation(inviteEmail.value, selectedClub.value.id, 'ClubAdmin')
+  
+  if (success) {
+    alert('Invitation sent successfully!')
+    inviteEmail.value = ''
+  } else {
+    alert(`Error sending invitation: ${error.message}`)
+  }
+}
+
+const headers = [
+  { title: 'Club ID', key: 'id' },
+  { title: 'Name', key: 'name' },
+  { title: 'Country', key: 'country' },
+  { title: 'City', key: 'city' },
+  { title: 'Code', key: 'code' }
+]
+
 onMounted(fetchClubs)
 </script>
 
@@ -89,6 +130,21 @@ onMounted(fetchClubs)
         placeholder="Search by name, country, city, or code"
         clearable
       />
+
+      <VSelect
+        v-model="selectedCountry"
+        :items="uniqueCountries"
+        label="Filter by Country"
+        clearable
+      />
+
+      <VSelect
+        v-model="selectedCity"
+        :items="uniqueCities"
+        label="Filter by City"
+        clearable
+      />
+
       <VBtn color="primary" @click="showAddModal = true">Add Club</VBtn>
     </div>
 
@@ -129,28 +185,43 @@ onMounted(fetchClubs)
     </VDialog>
 
     <!-- Club Details Modal -->
-    <VDialog v-model="showDetailsModal" max-width="500px">
-    <VCard>
+    <VDialog v-model="showDetailsModal" max-width="600px">
+      <VCard>
         <VCardTitle>Club Details</VCardTitle>
         <VCardText>
-        <p><strong>Name:</strong> {{ selectedClub?.name }}</p>
-        <p><strong>Country:</strong> {{ selectedClub?.country }}</p>
-        <p><strong>City:</strong> {{ selectedClub?.city }}</p>
-        <p><strong>Code:</strong> {{ selectedClub?.code }}</p>
-        
-        <VRow class="mt-4">
+          <VRow>
+            <!-- Left Side: Club Info -->
+            <VCol cols="6">
+              <p><strong>Name:</strong> {{ selectedClub?.name }}</p>
+              <p><strong>Country:</strong> {{ selectedClub?.country }}</p>
+              <p><strong>City:</strong> {{ selectedClub?.city }}</p>
+              <p><strong>Code:</strong> {{ selectedClub?.code }}</p>
+            </VCol>
+
+            <!-- Right Side: Email Input + Send Button -->
+            <VCol cols="6">
+              <VTextField
+                v-model="inviteEmail"
+                label="Invite Admin Email"
+                placeholder="Enter email"
+                append-inner-icon="ri-send-plane-line"
+                @click:append-inner="inviteAdmin"
+                clearable
+              />
+            </VCol>
+          </VRow>
+
+          <VRow class="mt-4">
             <VCol class="d-flex justify-start">
-            <v-btn color="primary" variant="flat" @click="showDetailsModal = false">Close</v-btn>
+              <VBtn color="primary" variant="flat" @click="showDetailsModal = false">Close</VBtn>
             </VCol>
             <VCol class="d-flex justify-end">
-            <VBtn color="#F44336" @click="showDeleteConfirm = true">Delete</VBtn>
+              <VBtn color="#F44336" @click="showDeleteConfirm = true">Delete</VBtn>
             </VCol>
-        </VRow>
+          </VRow>
         </VCardText>
-    </VCard>
+      </VCard>
     </VDialog>
-
-
 
     <!-- Delete Confirmation Modal -->
     <VDialog v-model="showDeleteConfirm" max-width="400px">
