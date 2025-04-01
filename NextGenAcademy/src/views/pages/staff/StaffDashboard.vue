@@ -7,18 +7,21 @@ const router = useRouter()
 const staff = ref([])
 const allStaff = ref([])
 const selectedRole = ref(null)
+const selectedTeam = ref(null) // Added filter by team
 const searchQuery = ref("")
 const userClubId = ref(null)
 
 const isModalOpen = ref(false)
 const selectedStaff = ref(null)
-const availableTeams = ref([])  // Hold teams data
-const staffWithNoTeam = ref([])  // Changed from teamsWithNoTeamOption to staffWithNoTeam
+const availableTeams = ref([])
+const staffWithNoTeam = ref([])
 
-// Fetch the user's club ID
+// Add Staff Modal
+const isAddStaffModalOpen = ref(false)
+const newStaffEmail = ref("")
+
 const fetchUserClub = async () => {
   const user = (await supabase.auth.getUser()).data.user
-
   if (!user) {
     console.error('User not authenticated')
     return
@@ -38,55 +41,54 @@ const fetchUserClub = async () => {
   } else {
     userClubId.value = data.club_id
     fetchStaff()
-    fetchTeams()  // Fetch teams after the club ID is fetched
+    fetchTeams()
   }
 }
 
-// Fetch all staff members based on club_id
 const fetchStaff = async () => {
   const { data, error } = await supabase
     .from('profiles')
     .select(`id, first_name, last_name, role, secondary_role, contact, team_id, teams(name)`)
-    .eq('club_id', userClubId.value)  // Filter by the current club
-    .eq('role', 'staff')  // Filter by the "staff" role
+    .eq('club_id', userClubId.value)
+    .eq('role', 'staff')
 
   if (error) {
     console.error('Error fetching staff:', error.message)
   } else {
     staff.value = data
-    allStaff.value = data  // Keep a reference to all staff for filtering
+    allStaff.value = data
   }
 }
 
-// Fetch available teams for the current club
 const fetchTeams = async () => {
   const { data, error } = await supabase
     .from('teams')
     .select('id, name, club_id')
-    .eq('club_id', userClubId.value)  // Filter by the current club
+    .eq('club_id', userClubId.value)
 
   if (error) {
     console.error('Error fetching teams:', error.message)
   } else {
-    availableTeams.value = data  // Store available teams for selection
-    // Add "No Team" option
+    availableTeams.value = data
     staffWithNoTeam.value = [{ id: null, name: 'No Team' }, ...data]
   }
 }
 
-// Computed property for filtering staff
+// **Updated Filter Logic**
 const filteredStaff = computed(() => {
-  const searchLower = searchQuery.value.toLowerCase()
+  const searchLower = searchQuery.value?.toLowerCase() || ""
 
   return allStaff.value.filter(staffMember => {
-    const matchesRole = !selectedRole.value || staffMember.role === selectedRole.value
+    const matchesRole = !selectedRole.value || staffMember.secondary_role === selectedRole.value
+    const matchesTeam = !selectedTeam.value || staffMember.team_id === selectedTeam.value
     const matchesSearch =
       !searchQuery.value ||
       staffMember.first_name.toLowerCase().includes(searchLower) ||
       staffMember.last_name.toLowerCase().includes(searchLower) ||
       staffMember.contact?.toLowerCase().includes(searchLower) ||
-      staffMember.teams?.name.toLowerCase().includes(searchLower)
-    return matchesRole && matchesSearch
+      staffMember.teams?.name?.toLowerCase().includes(searchLower)
+
+    return matchesRole && matchesTeam && matchesSearch
   })
 })
 
@@ -102,12 +104,10 @@ const openStaffModal = (event, { item }) => {
   isModalOpen.value = true
 }
 
-// Close the modal
 const closeModal = () => {
   isModalOpen.value = false
 }
 
-// Save the updated team selection for the staff
 const saveTeamSelection = async () => {
   if (!selectedStaff.value || !selectedStaff.value.id) {
     console.error('No staff member selected')
@@ -117,31 +117,56 @@ const saveTeamSelection = async () => {
   try {
     const { error } = await supabase
       .from('profiles')
-      .update({ 
-        team_id: selectedStaff.value.team_id 
-      })
+      .update({ team_id: selectedStaff.value.team_id })
       .eq('id', selectedStaff.value.id)
 
     if (error) throw error
 
     console.log('Team updated successfully')
-    
-    // Refresh the data
     await fetchStaff()
     closeModal()
   } catch (error) {
     console.error('Error updating team:', error.message)
-    // You might want to show an error message to the user here
   }
 }
 
-// Trigger fetching of user club when component is mounted
+// **Open Add Staff Modal**
+const openAddStaffModal = () => {
+  isAddStaffModalOpen.value = true
+}
+
+// **Send Invite Function**
+const sendInvite = async () => {
+  if (!newStaffEmail.value) {
+    console.error('Email is required')
+    return
+  }
+
+  try {
+    const { error } = await supabase
+      .from('invitations')
+      .insert([{ email: newStaffEmail.value, club_id: userClubId.value, role: 'staff' }])
+
+    if (error) throw error
+
+    console.log('Invitation sent successfully')
+    isAddStaffModalOpen.value = false
+    newStaffEmail.value = ""
+  } catch (error) {
+    console.error('Error sending invite:', error.message)
+  }
+}
+
 onMounted(fetchUserClub)
 </script>
 
 <template>
   <VCard>
     <div class="filters pa-4 d-flex gap-4">
+      <!-- Search Staff -->
+      <VTextField v-model="searchQuery" label="Search Staff" clearable />
+      
+      <!-- Filter by Role -->
       <VSelect
         v-model="selectedRole"
         :items="[ 
@@ -157,19 +182,27 @@ onMounted(fetchUserClub)
         ]"
         label="Filter by Role"
         clearable
-      ></VSelect>
+      />
 
-      <VTextField
-        v-model="searchQuery"
-        label="Search Staff"
+      
+
+      <!-- Filter by Team -->
+      <VSelect
+        v-model="selectedTeam"
+        :items="availableTeams"
+        item-title="name"
+        item-value="id"
+        label="Filter by Team"
         clearable
-      ></VTextField>
+      />
 
-      <VBtn color="primary" @click="router.push('/staff/add')">
+      <!-- Add Staff Button -->
+      <VBtn color="primary" @click="openAddStaffModal">
         Add Staff
       </VBtn>
     </div>
 
+    <!-- Staff Table -->
     <VDataTable
       :headers="headers"
       :items="filteredStaff"
@@ -184,9 +217,6 @@ onMounted(fetchUserClub)
       <template #item.team_name="{ item }">
         <div>{{ item.teams?.name || 'N/A' }}</div>
       </template>
-      <template #item.role="{ item }">
-        <div>{{ item.role }}</div>
-      </template>
       <template #item.contact="{ item }">
         <div>{{ item.contact || 'N/A' }}</div>
       </template>
@@ -194,7 +224,7 @@ onMounted(fetchUserClub)
     </VDataTable>
   </VCard>
 
-  <!-- Staff Details Modal -->
+  <!-- **Staff Details Modal** -->
   <VDialog v-model="isModalOpen" max-width="500px">
     <VCard>
       <VCardTitle>{{ selectedStaff?.first_name }} {{ selectedStaff?.last_name }}</VCardTitle>
@@ -202,20 +232,30 @@ onMounted(fetchUserClub)
         <div><strong>Role:</strong> {{ selectedStaff?.role }}</div>
         <div><strong>Secondary Role:</strong> {{ selectedStaff?.secondary_role }}</div>
         <div><strong>Contact:</strong> {{ selectedStaff?.contact || 'N/A' }}</div>
+      </VCardText>
+      <VCardText>
         <div>
           <strong>Assign to Team:</strong>
-          <VSelect
-            v-model="selectedStaff.team_id"
-            :items="staffWithNoTeam"
-            item-title="name"
-            item-value="id"
-            label="Select Team"
-          />
+          <VSelect v-model="selectedStaff.team_id" :items="staffWithNoTeam" item-title="name" item-value="id" />
         </div>
       </VCardText>
       <VCardActions>
         <VBtn @click="closeModal">Close</VBtn>
         <VBtn color="primary" @click="saveTeamSelection">Save</VBtn>
+      </VCardActions>
+    </VCard>
+  </VDialog>
+
+  <!-- **Add Staff Modal** -->
+  <VDialog v-model="isAddStaffModalOpen" max-width="400px">
+    <VCard>
+      <VCardTitle>Add Staff</VCardTitle>
+      <VCardText>
+        <VTextField v-model="newStaffEmail" label="Staff Email" type="email" clearable />
+      </VCardText>
+      <VCardActions>
+        <VBtn @click="isAddStaffModalOpen = false">Cancel</VBtn>
+        <VBtn color="primary" @click="sendInvite">Send Invite</VBtn>
       </VCardActions>
     </VCard>
   </VDialog>
