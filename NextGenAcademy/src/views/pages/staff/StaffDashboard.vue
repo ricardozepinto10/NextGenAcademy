@@ -16,6 +16,13 @@ const selectedStaff = ref(null)
 const availableTeams = ref([])
 const staffWithNoTeam = ref([])
 
+const secondaryRoles = ref([])
+
+onMounted(async () => {
+  const { data, error } = await supabase.from('secondary_roles').select('name')
+  if (!error) secondaryRoles.value = data.map(r => r.name)
+})
+
 // Add Staff Modal
 const isAddStaffModalOpen = ref(false)
 const newStaffEmail = ref("")
@@ -117,18 +124,22 @@ const saveTeamSelection = async () => {
   try {
     const { error } = await supabase
       .from('profiles')
-      .update({ team_id: selectedStaff.value.team_id })
+      .update({
+        team_id: selectedStaff.value.team_id,
+        secondary_role: selectedStaff.value.secondary_role || null,
+      })
       .eq('id', selectedStaff.value.id)
 
     if (error) throw error
 
-    console.log('Team updated successfully')
+    console.log('Team and secondary role updated successfully')
     await fetchStaff()
     closeModal()
   } catch (error) {
-    console.error('Error updating team:', error.message)
+    console.error('Error updating staff:', error.message)
   }
 }
+
 
 // **Open Add Staff Modal**
 const openAddStaffModal = () => {
@@ -169,22 +180,12 @@ onMounted(fetchUserClub)
       <!-- Filter by Role -->
       <VSelect
         v-model="selectedRole"
-        :items="[ 
-          'main coach', 
-          'assistant coach', 
-          'fitness coach', 
-          'analyst', 
-          'physioterapist', 
-          'medic', 
-          'nurse', 
-          'team manager', 
-          'assistant team manager' 
-        ]"
+        :items="secondaryRoles"
+        item-title="name"
+        item-value="name"
         label="Filter by Role"
         clearable
       />
-
-      
 
       <!-- Filter by Team -->
       <VSelect
@@ -224,27 +225,45 @@ onMounted(fetchUserClub)
     </VDataTable>
   </VCard>
 
-  <!-- **Staff Details Modal** -->
-  <VDialog v-model="isModalOpen" max-width="500px">
-    <VCard>
-      <VCardTitle>{{ selectedStaff?.first_name }} {{ selectedStaff?.last_name }}</VCardTitle>
-      <VCardText>
-        <div><strong>Role:</strong> {{ selectedStaff?.role }}</div>
-        <div><strong>Secondary Role:</strong> {{ selectedStaff?.secondary_role }}</div>
-        <div><strong>Contact:</strong> {{ selectedStaff?.contact || 'N/A' }}</div>
-      </VCardText>
-      <VCardText>
-        <div>
-          <strong>Assign to Team:</strong>
-          <VSelect v-model="selectedStaff.team_id" :items="staffWithNoTeam" item-title="name" item-value="id" />
-        </div>
-      </VCardText>
-      <VCardActions>
-        <VBtn @click="closeModal">Close</VBtn>
-        <VBtn color="primary" @click="saveTeamSelection">Save</VBtn>
-      </VCardActions>
-    </VCard>
-  </VDialog>
+  <!-- Staff Details Modal -->
+<VDialog v-model="isModalOpen" max-width="500px">
+  <VCard>
+    <VCardTitle>{{ selectedStaff?.first_name }} {{ selectedStaff?.last_name }}</VCardTitle>
+    <VCardText>
+      <div><strong>Role:</strong> {{ selectedStaff?.role }}</div>
+      <div><strong>Secondary Role:</strong> {{ selectedStaff?.secondary_role || 'N/A' }}</div>
+      <div><strong>Contact:</strong> {{ selectedStaff?.contact || 'N/A' }}</div>
+    </VCardText>
+
+    <VCardText>
+      <div class="mb-4">
+        <strong>Assign to Team:</strong>
+        <VSelect
+          v-model="selectedStaff.team_id"
+          :items="staffWithNoTeam"
+          item-title="name"
+          item-value="id"
+          label="Select Team"
+        />
+      </div>
+      <div>
+        <strong>Assign Secondary Role:</strong>
+        <VSelect
+          v-model="selectedStaff.secondary_role"
+          :items="secondaryRoles"
+          label="Select Role"
+          clearable
+        />
+      </div>
+    </VCardText>
+
+    <VCardActions>
+      <VBtn @click="closeModal">Close</VBtn>
+      <VBtn color="primary" @click="saveTeamSelection">Save</VBtn>
+    </VCardActions>
+  </VCard>
+</VDialog>
+
 
   <!-- **Add Staff Modal** -->
   <VDialog v-model="isAddStaffModalOpen" max-width="400px">

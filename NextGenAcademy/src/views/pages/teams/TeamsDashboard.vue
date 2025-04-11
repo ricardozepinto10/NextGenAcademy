@@ -70,7 +70,7 @@ const fetchTeams = async () => {
 
         // Assign staff names based on secondary_role
         const mainCoach = staffData.find(staff => staff.secondary_role === 'main coach')
-        const subCoach = staffData.find(staff => staff.secondary_role === 'sub coach')
+        const subCoach = staffData.find(staff => staff.secondary_role === 'assistant coach')
         const teamManager = staffData.find(staff => staff.secondary_role === 'team manager')
 
         return {

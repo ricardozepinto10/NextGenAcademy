@@ -160,4 +160,8 @@ CREATE TABLE transactions (
 );
 
 
+CREATE TABLE public.secondary_roles (
+  id serial PRIMARY KEY,
+  name text UNIQUE NOT NULL
+);
 
